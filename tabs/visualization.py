@@ -962,9 +962,3 @@ def render_visualization_tab(
         )
 
         plt.close(fig7)
-
-    st.divider()
-
-    st.caption(
-        "Visualisasi Data | Tahunan"
-    )

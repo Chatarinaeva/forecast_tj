@@ -1,8 +1,5 @@
 import re
 from pathlib import Path
-
-import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -13,7 +10,7 @@ from tabs.prediction import render_prediction_tab
 
 # KONFIGURASI HALAMAN
 st.set_page_config(
-    page_title="Dashboard Penumpang Bus Trans Jogja",
+    page_title="Visualisasi & Prediksi Penumpang Trans Jogja",
     layout="wide"
 )
 
@@ -59,7 +56,6 @@ month_cols = [
     "november",
     "december"
 ]
-
 
 month_alias = {
     "januari": 1,
@@ -111,7 +107,6 @@ month_alias = {
     "december": 12,
 }
 
-
 month_num_to_en = {
     1: "january",
     2: "february",
@@ -126,7 +121,6 @@ month_num_to_en = {
     11: "november",
     12: "december"
 }
-
 
 month_num_to_id = {
     1: "Januari",
@@ -707,71 +701,6 @@ except Exception as error:
 # Menyimpan semua tahun
 df_all_year = df.copy()
 
-
-# # SIDEBAR - FILTER TAHUN
-# st.sidebar.header(
-#     "📅 Filter Tahun"
-# )
-
-# year_list = sorted(
-#     df["year"]
-#     .dropna()
-#     .astype(int)
-#     .unique()
-# )
-
-# selected_year = st.sidebar.selectbox(
-#     "Pilih Tahun",
-#     year_list,
-#     index=len(year_list) - 1
-# )
-
-# df_selected_year = df[
-#     df["year"] == selected_year
-# ].copy()
-
-# # SIDEBAR - FILTER JALUR
-# st.sidebar.header(
-#     "🛣️ Filter Jalur"
-# )
-
-# route_available = [
-#     route
-#     for route in route_order_viz
-#     if route
-#     in df_selected_year["route"].unique()
-# ]
-
-# selected_route_viz = st.sidebar.multiselect(
-#     "Pilih Jalur",
-#     options=route_available,
-#     default=route_available
-# )
-
-# # SIDEBAR - SKALA PENUMPANG
-# st.sidebar.markdown(
-#     "### Skala Jumlah Penumpang"
-# )
-
-# unit = st.sidebar.selectbox(
-#     "Pilih Skala",
-#     [
-#         "Jiwa",
-#         "Ribu Jiwa",
-#         "Juta Jiwa"
-#     ],
-#     index=1
-# )
-
-# scale_map = {
-#     "Jiwa": 1,
-#     "Ribu Jiwa": 1_000,
-#     "Juta Jiwa": 1_000_000
-# }
-
-# scale = scale_map[unit]
-
-
 # TABS
 tab_viz, tab_pred = st.tabs(
     [
@@ -779,22 +708,6 @@ tab_viz, tab_pred = st.tabs(
         "🔮 Prediksi"
     ]
 )
-
-# # TAB VISUALISASI
-# with tab_viz:
-
-#     render_visualization_tab(
-#         df_selected_year=df_selected_year,
-#         df_all_year=df_all_year,
-#         selected_year=selected_year,
-#         selected_route_viz=selected_route_viz,
-#         route_available=route_available,
-#         month_cols=month_cols,
-#         route_order_viz=route_order_viz,
-#         scale=scale,
-#         unit=unit,
-#         enable_visualization_tab=ENABLE_VISUALIZATION_TAB,
-#     )
 
 # TAB VISUALISASI
 with tab_viz:
@@ -839,5 +752,6 @@ with tab_pred:
 
 # FOOTER
 st.caption(
-    "🚌 Dashboard Penumpang Bus | Data Tahunan"
+    "© 2026 Chatarina Evangelista · Dibuat dengan Streamlit  \n"
+    "Sumber data: Dinas Perhubungan Daerah Istimewa Yogyakarta"
 )
