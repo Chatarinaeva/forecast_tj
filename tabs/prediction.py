@@ -48,7 +48,7 @@ def render_prediction_tab(
 
     SHOW_ARTIFACTS_STATUS = show_artifacts_status
 
-    st.subheader("🔮 Prediksi Jumlah Penumpang")
+    st.subheader("Prediksi Jumlah Penumpang")
 
     st.markdown(
         """
@@ -59,7 +59,7 @@ def render_prediction_tab(
     )
     st.divider()
 
-    st.markdown("### 📥 Input Data untuk Prediksi")
+    st.markdown("### Input Data untuk Prediksi")
 
     # =========================================================
     # 1. TEMPLATE UPLOAD
@@ -432,11 +432,38 @@ def render_prediction_tab(
 
     col_input_1, col_input_2 = st.columns(2)
 
+    # with col_input_1:
+    #     selected_routes_pred = st.multiselect(
+    #         "Pilih jalur yang ingin diprediksi",
+    #         options=route_options,
+    #         default=route_options
+    #     )
+
     with col_input_1:
+        if "select_all_routes" not in st.session_state:
+            st.session_state["select_all_routes"] = True
+
+        if "selected_routes_pred" not in st.session_state:
+            st.session_state["selected_routes_pred"] = route_options
+
+        def update_route_selection():
+            if st.session_state["select_all_routes"]:
+                st.session_state["selected_routes_pred"] = route_options
+            else:
+                st.session_state["selected_routes_pred"] = []
+
         selected_routes_pred = st.multiselect(
             "Pilih jalur yang ingin diprediksi",
             options=route_options,
-            default=route_options
+            key="selected_routes_pred",
+            disabled=st.session_state["select_all_routes"],
+            placeholder="Pilih satu atau beberapa jalur"
+        )
+
+        st.checkbox(
+            "Pilih Semua Jalur",
+            key="select_all_routes",
+            on_change=update_route_selection
         )
 
     with col_input_2:
@@ -448,7 +475,7 @@ def render_prediction_tab(
         )
 
     if len(selected_routes_pred) == 0:
-        st.warning("Silakan pilih minimal satu jalur untuk diprediksi.")
+        st.info("Pilih minimal 1 jalur untuk menjalankan prediksi.")
         st.stop()
 
     # =========================================================
@@ -493,11 +520,11 @@ def render_prediction_tab(
             "Periode prediksi ditentukan otomatis berdasarkan bulan terakhir masing-masing jalur."
         )
 
-    st.markdown("#### 🗓️ Jenis Periode Prediksi")
+    st.markdown("#### Jenis Periode Prediksi")
 
     st.caption(
-        f"Jumlah bulan prediksi tetap **{forecast_horizon} bulan per jalur**. "
-        "Daftar periode di bawah merupakan gabungan periode prediksi dari semua jalur terpilih."
+        f"Kategori periode untuk **{forecast_horizon} bulan ke depan** "
+        "diterapkan untuk seluruh jalur terpilih."
     )
 
     holiday_options = [
@@ -510,7 +537,7 @@ def render_prediction_tab(
     col_head_1, col_head_2 = st.columns([1, 1.3])
 
     with col_head_1:
-        st.markdown("**Periode Forecast**")
+        st.markdown("**Periode Prediksi**")
 
     with col_head_2:
         st.markdown("**Jenis Periode**")
@@ -1653,7 +1680,7 @@ def render_prediction_tab(
             pred_values_clipped = np.maximum(raw_pred_values, 0)
             pred_values_rounded = np.round(pred_values_clipped).astype(int)
 
-            status_prediksi = np.select(
+            prediction_note = np.select(
                 [
                     raw_pred_values < 0,
                     raw_pred_values == 0,
@@ -1664,7 +1691,7 @@ def render_prediction_tab(
                     "Model menghasilkan nilai 0",
                     "Nilai sangat kecil, dibulatkan menjadi 0"
                 ],
-                default="Normal"
+                default="-"
             )
 
             route_prediction = pd.DataFrame({
@@ -1675,7 +1702,7 @@ def render_prediction_tab(
                 "best_model_mapping": best_model,
                 "model_used": model_used,
                 "raw_prediction": np.round(raw_pred_values, 2),
-                "prediction_status": status_prediksi,
+                "prediction_note": prediction_note,
                 "prediction": pred_values_rounded
             })
 
@@ -1694,26 +1721,75 @@ def render_prediction_tab(
             )
 
             st.success("Prediksi berhasil dibuat.")
-            st.markdown("### 📊 Hasil Prediksi")
-            st.markdown("#### 📋 Tabel Hasil Prediksi")
+            st.markdown("### Hasil Prediksi")
+            st.markdown("#### Tabel Hasil Prediksi")
 
-            output_columns = [
-                "route",
-                "periode",
-                "period_category",
-                "best_model_mapping",
-                "model_used",
-                "raw_prediction",
-                "prediction_status",
-                "prediction"
-            ]
-
-            st.dataframe(
-                final_prediction_df[output_columns],
-                use_container_width=True
+            # Kolom yang ditampilkan pada prototipe
+            display_df = final_prediction_df[
+                [
+                    "route",
+                    "periode",
+                    "period_category",
+                    "model_used",
+                    "prediction"
+                ]
+            ].rename(
+                columns={
+                    "route": "Jalur",
+                    "periode": "Periode",
+                    "period_category": "Jenis Periode",
+                    "model_used": "Model",
+                    "prediction": "Prediksi"
+                }
             )
 
-            result_csv = final_prediction_df[output_columns].to_csv(index=False).encode("utf-8")
+            st.dataframe(
+                display_df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            # Kolom yang disimpan pada CSV
+            output_df = final_prediction_df[
+                [
+                    "route",
+                    "periode",
+                    "period_category",
+                    "best_model_mapping",
+                    "model_used",
+                    "raw_prediction",
+                    "prediction",
+                    "prediction_note"
+                ]
+            ].rename(
+                columns={
+                    "route": "Jalur",
+                    "periode": "Periode",
+                    "period_category": "Jenis Periode",
+                    "best_model_mapping": "Model Terbaik",
+                    "model_used": "Model Digunakan",
+                    "raw_prediction": "Prediksi Mentah",
+                    "prediction": "Prediksi",
+                    "prediction_note": "Keterangan Hasil Prediksi"
+                }
+            )
+
+            result_csv = (
+                output_df
+                .to_csv(index=False)
+                .encode("utf-8")
+            )
+
+            # st.dataframe(
+            #     final_prediction_df[display_columns],
+            #     use_container_width=True
+            # )
+
+            # result_csv = (
+            #     final_prediction_df[output_columns]
+            #     .to_csv(index=False)
+            #     .encode("utf-8")
+            # )
 
             st.download_button(
                 label="⬇️ Download Hasil Prediksi CSV",
@@ -1727,7 +1803,7 @@ def render_prediction_tab(
         # =================================================
         # 9. GRAFIK AKTUAL VS PREDIKSI PER JALUR
         # =================================================
-        st.markdown("#### 📈 Grafik Aktual vs Prediksi per Jalur")
+        st.markdown("#### Grafik Aktual vs Prediksi per Jalur")
 
         plot_routes = list(final_prediction_df["route"].dropna().unique())
 
