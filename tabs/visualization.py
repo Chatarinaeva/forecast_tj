@@ -639,10 +639,13 @@ def render_visualization_tab(
         f"Setiap Bulan Tahun {selected_year}"
     )
 
+    # Default 3 jalur dengan total penumpang tertinggi
+    default_routes = max5["route"].head(3).tolist()
+
     selected_route_viz = st.multiselect(
         "Pilih Jalur",
         options=route_available,
-        default=route_available,
+        default=default_routes,
         placeholder="Pilih satu atau beberapa jalur",
         key="viz_selected_routes",
     )
@@ -656,9 +659,9 @@ def render_visualization_tab(
             "Pilih minimal 1 jalur untuk menampilkan jumlah penumpang per bulan."
         )
 
-    elif len(selected_route_viz) > 3:
+    elif len(selected_route_viz) > 5:
         st.info(
-            "Pilih maksimal 3 jalur agar grafik tidak terlalu padat "
+            "Pilih maksimal 5 jalur agar grafik tidak terlalu padat "
             "dan perbandingan antarjalur setiap bulan tetap mudah dibaca."
         )
 
@@ -699,13 +702,13 @@ def render_visualization_tab(
             dpi=120,
         )
 
-        sns.barplot(
+        sns.lineplot(
             data=group_df,
             x="month",
             y="nilai_plot",
             hue="route",
             hue_order=current_route,
-            errorbar=None,
+            marker="o",
             ax=ax6,
         )
 
@@ -746,6 +749,7 @@ def render_visualization_tab(
         )
 
         ax6.set_xticklabels(month_labels, rotation=0)
+
         plt.tight_layout()
 
         st.pyplot(
