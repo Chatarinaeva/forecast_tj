@@ -30,9 +30,7 @@ def render_prediction_tab(
     scalers_dir,
     show_artifacts_status,
 ):
-    # =========================================================
-    # ALIAS PATH/KONFIGURASI DARI prototype.py
-    # =========================================================
+    # KONFIGURASI PATH DARI prototype.py
     AUTO_SELECTION_PATH = Path(auto_selection_path)
     MODEL_REGISTRY_PATH = Path(model_registry_path)
     MODEL_PARAMS_PATH = Path(model_params_path)
@@ -61,9 +59,7 @@ def render_prediction_tab(
 
     st.markdown("### Input Data untuk Prediksi")
 
-    # =========================================================
     # 1. TEMPLATE UPLOAD
-    # =========================================================
     def create_template_data():
         template = pd.DataFrame({
             "year": [2026, 2026, 2026, 2026, 2026, 2026],
@@ -84,9 +80,7 @@ def render_prediction_tab(
         mime="text/csv"
     )
 
-    # =========================================================
     # 2. UPLOAD DATA TERBARU
-    # =========================================================
     uploaded_file = st.file_uploader(
         "Upload data terbaru dalam format CSV atau Excel",
         type=["csv", "xlsx"]
@@ -141,13 +135,11 @@ def render_prediction_tab(
 
     st.info(
         f"Data yang digunakan mencakup periode "
-        f"{period_label_id(combined_data['period'].min())} sampai "
+        f"{period_label_id(combined_data['period'].min())} hingga "
         f"{period_label_id(combined_data['period'].max())}."
     )
 
-    # =========================================================
     # 3. LOAD MODEL ARTIFACT DAN MAPPING MODEL TERBAIK
-    # =========================================================
     @st.cache_data
     def load_auto_selection_result():
         if not AUTO_SELECTION_PATH.exists():
@@ -346,9 +338,7 @@ def render_prediction_tab(
         else:
             st.warning("final_xgb_params.pkl belum ditemukan. XGBoost akan memakai model_params.pkl.")
 
-    # =========================================================
     # 4. INPUT JALUR DAN JUMLAH BULAN PREDIKSI
-    # =========================================================
     route_unique_data = sorted(combined_data["route"].dropna().unique())
 
     route_options_all = (
@@ -418,8 +408,9 @@ def render_prediction_tab(
     if len(unmodeled_routes) > 0:
         with st.expander("Jalur yang belum memiliki model tersimpan"):
             st.write(
-                "Jalur berikut belum tersedia di `model_registry.csv` karena hanya memiliki 12 bulan data historis pada dataset, "
-                "sedangkan pemodelan membutuhkan 36 bulan data."
+                "Jalur berikut belum tersedia di `model_registry.csv`. " 
+                "Dalam penelitian ini, jalur tersebut hanya memiliki 12 bulan data historis,"
+                "sehingga tidak memenuhi kriteria minimum 18 bulan untuk proses pemodelan."
             )
 
             st.dataframe(
@@ -478,9 +469,7 @@ def render_prediction_tab(
         st.info("Pilih minimal 1 jalur untuk menjalankan prediksi.")
         st.stop()
 
-    # =========================================================
     # 5. INPUT PERIODE PREDIKSI DAN PERIODE LIBUR
-    # =========================================================
     # Membuat periode forecast berdasarkan bulan terakhir masing-masing jalur
     route_future_period_map = {}
 
@@ -516,8 +505,8 @@ def render_prediction_tab(
         )
     else:
         st.info(
-            "Dataset aktif hanya menggunakan **data historis bawaan dashboard**. "
-            "Periode prediksi ditentukan otomatis berdasarkan bulan terakhir masing-masing jalur."
+            "Data historis bawaan prototipe digunakan sebagai data aktif. "
+            "Periode prediksi ditentukan secara otomatis berdasarkan bulan terakhir setiap jalur."
         )
 
     st.markdown("#### Jenis Periode Prediksi")
@@ -649,9 +638,7 @@ def render_prediction_tab(
 
     st.divider()
 
-    # =========================================================
     # 6. HELPER FORECAST BERDASARKAN SAVED MODEL
-    # =========================================================
     HOLIDAY_COLS = [
         "is_eid_holiday",
         "is_school_year_end",
@@ -1610,9 +1597,7 @@ def render_prediction_tab(
         else:
             raise ValueError(f"Jenis model tidak dikenali: {best_model}")
 
-    # =========================================================
     # 7. JALANKAN PREDIKSI
-    # =========================================================
     run_prediction = st.button(
         "🚀 Jalankan Prediksi",
         type="primary"
@@ -1711,9 +1696,7 @@ def render_prediction_tab(
 
         progress_bar.empty()
 
-        # =====================================================
         # 8. OUTPUT HASIL PREDIKSI
-        # =====================================================
         if len(all_prediction_results) > 0:
             final_prediction_df = pd.concat(
                 all_prediction_results,
@@ -1800,9 +1783,7 @@ def render_prediction_tab(
 
             st.divider()
 
-        # =================================================
         # 9. GRAFIK AKTUAL VS PREDIKSI PER JALUR
-        # =================================================
         st.markdown("#### Grafik Aktual vs Prediksi per Jalur")
 
         plot_routes = list(final_prediction_df["route"].dropna().unique())
@@ -1902,9 +1883,7 @@ def render_prediction_tab(
         plt.tight_layout()
         st.pyplot(fig_pred, use_container_width=True)
 
-        # =====================================================
         # 10. JALUR YANG TIDAK DIPREDIKSI
-        # =====================================================
         if len(skipped_routes) > 0:
             st.warning("Beberapa jalur tidak diprediksi karena data belum mencukupi.")
 
